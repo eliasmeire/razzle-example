@@ -19,3 +19,16 @@ hydrate(
 if (module.hot) {
   module.hot.accept();
 }
+
+if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then(registration => {
+        console.log(`SW registered: ${registration}`);
+      })
+      .catch(error => {
+        console.warn(`SW registration failed: ${error}`);
+      });
+  });
+}
