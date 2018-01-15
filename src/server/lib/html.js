@@ -5,7 +5,6 @@ const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
 
 export const sendHtmlResponse = (req, res) => {
   const { appMarkup, appState, helmet } = res.locals;
-  console.log(appState);
   res.status(200).send(
     generateHtmlDocument({
       appMarkup,
