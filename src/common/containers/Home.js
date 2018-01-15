@@ -7,11 +7,15 @@ import { actions } from '../reducers/entities/posts';
 
 class Home extends PureComponent {
   componentDidMount() {
-    this.props.fetchPostsIfNeeded();
+    //his.props.fetchPostsIfNeeded();
   }
 
   render() {
     const { posts, error, isLoading } = this.props;
+
+    if (Object.keys(posts).length === 0 && isLoading) {
+      return null;
+    }
 
     if (error) {
       return 'ERROR';
@@ -20,7 +24,6 @@ class Home extends PureComponent {
     return (
       <div className="home">
         <img src={logo} alt={'Logo'} />
-        <p>{isLoading && 'Loading...'}</p>
         {error && <div>{JSON.stringify(error)}</div>}
         <div className="posts">
           {posts && posts.map(post => <Post key={post.id} {...post} />)}

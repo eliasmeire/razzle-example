@@ -3,33 +3,11 @@ import React from 'react';
 import { StaticRouter } from 'react-router-dom';
 import Helmet from 'react-helmet';
 import { Provider } from 'react-redux';
-import App from '../../../common/App';
-import configureStore from '../../../common/store/configureStore';
-import { fetchPost } from '../../../common/lib/api';
+import App from '../../common/App';
 
-export const renderPostMiddleware = async (req, res, next) => {
-  const { postId } = req.params;
-  let post = {};
+export const renderReactMiddleware = async (req, res, next) => {
   try {
-    post = await fetchPost(postId);
-  } catch (err) {
-    console.error(`Error while fetching from API`, err);
-  }
-
-  try {
-    const preloadedState = {
-      entities: {
-        posts: {
-          [postId]: post
-        }
-      },
-      views: {
-        detail: {
-          postId
-        }
-      }
-    };
-    const store = configureStore(preloadedState);
+    const { store } = res.locals;
     const routerContext = {};
     const appMarkup = renderToString(
       <Provider store={store}>

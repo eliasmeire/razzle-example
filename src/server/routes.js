@@ -1,29 +1,33 @@
 import { Router } from 'express';
-import { renderHomeMiddleware } from './middlewares/render/renderHome';
-import { renderPostMiddleware } from './middlewares/render/renderPost';
+import { renderReactMiddleware } from './middlewares/render';
 import { redirectMiddleware } from './middlewares/redirect';
-import { htmlDocument } from './htmlDocument';
+import { reduxStoreMiddleware } from './middlewares/redux';
+import { sendHtmlResponse } from './lib/html';
+import { actions as postActions } from '../common/reducers/entities/posts';
 
 export const router = Router();
-const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
 
-const sendHtmlResponse = (req, res) => {
-  const { appMarkup, appState, helmet } = res.locals;
-  res.status(200).send(
-    htmlDocument({
-      appMarkup,
-      appState,
-      helmet,
-      jsPath: assets.client.js,
-      cssPath: assets.client.css
-    })
-  );
-};
+router.get(
+  '/',
+  (req, res, next) => {
+    res.locals.actions = [postActions.fetchPosts()];
+    next();
+  },
+  reduxStoreMiddleware,
+  renderReactMiddleware,
+  redirectMiddleware,
+  sendHtmlResponse
+);
 
-router.get('/', renderHomeMiddleware, redirectMiddleware, sendHtmlResponse);
 router.get(
   '/posts/:postId',
-  renderPostMiddleware,
+  (req, res, next) => {
+    const { postId } = req.params;
+    res.locals.actions = [postActions.fetchPost(postId)];
+    next();
+  },
+  reduxStoreMiddleware,
+  renderReactMiddleware,
   redirectMiddleware,
   sendHtmlResponse
 );

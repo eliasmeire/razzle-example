@@ -1,7 +1,23 @@
 import serialize from 'serialize-javascript';
-import { isProd } from './';
+import { isProd } from '../';
 
-export const htmlDocument = ({
+const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
+
+export const sendHtmlResponse = (req, res) => {
+  const { appMarkup, appState, helmet } = res.locals;
+  console.log(appState);
+  res.status(200).send(
+    generateHtmlDocument({
+      appMarkup,
+      appState,
+      helmet,
+      jsPath: assets.client.js,
+      cssPath: assets.client.css
+    })
+  );
+};
+
+const generateHtmlDocument = ({
   cssPath,
   jsPath,
   appMarkup,
