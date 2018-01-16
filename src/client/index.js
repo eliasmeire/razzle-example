@@ -1,20 +1,29 @@
-import App from '../common/App';
 import BrowserRouter from 'react-router-dom/BrowserRouter';
 import React from 'react';
 import { hydrate } from 'react-dom';
 import { Provider } from 'react-redux';
+import Loadable from 'react-loadable';
 import configureStore from '../common/store/configureStore';
+import App from '../common/App';
+import {
+  preloadedStateWindowKey,
+  startAppWindowKey
+} from '../common/constants';
 
-const store = configureStore(window.__PRELOADED_STATE__);
+const store = configureStore(window[preloadedStateWindowKey]);
 
-hydrate(
-  <Provider store={store}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </Provider>,
-  document.getElementById('root')
-);
+window[startAppWindowKey] = () => {
+  Loadable.preloadReady().then(() => {
+    hydrate(
+      <Provider store={store}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </Provider>,
+      document.getElementById('root')
+    );
+  });
+};
 
 if (module.hot) {
   module.hot.accept();

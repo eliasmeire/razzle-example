@@ -4,6 +4,7 @@ import logo from '../../assets/logo.svg';
 import Post from '../components/Post';
 import { getPostsByIds } from '../reducers/views/overview';
 import { actions } from '../reducers/entities/posts';
+import './Home.css';
 
 class Home extends PureComponent {
   componentDidMount() {
