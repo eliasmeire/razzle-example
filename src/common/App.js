@@ -2,6 +2,7 @@ import React, { Fragment } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Loadable from 'react-loadable';
+import './App.css';
 
 const LoadableHome = Loadable({
   loader: () => import('./containers/Home'),
