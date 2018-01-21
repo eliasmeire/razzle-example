@@ -1,20 +1,10 @@
 import serialize from 'serialize-javascript';
-import { isProd } from '../';
-import {
-  preloadedStateWindowKey,
-  startAppWindowKey
-} from '../../common/constants';
-import { getBundles } from 'react-loadable/webpack';
-
-const stats = require('../../../build/react-loadable.json');
-const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
+import { preloadedStateWindowKey } from '../../common/constants';
 
 export const sendHtmlResponse = (req, res) => {
-  const { appMarkup, appState, helmet, modules } = res.locals;
-  const { js, css } = assets.client;
-  const bundles = getBundles(stats, modules);
-  const jsChunks = bundles.filter(bundle => bundle.file.endsWith('.js'));
-  const cssChunks = bundles.filter(bundle => bundle.file.endsWith('.css'));
+  const { appMarkup, appState, helmet, chunks } = res.locals;
+  const { js, styles, cssHash } = chunks;
+  console.log(js);
 
   res.status(200).send(
     html`
@@ -27,29 +17,15 @@ export const sendHtmlResponse = (req, res) => {
         ${helmet.title.toString()}
         ${helmet.meta.toString()}
         ${helmet.link.toString()}
-        ${css ? `<link rel="stylesheet" href="${css}">` : ''}
-        ${cssChunks
-          .map(chunk => {
-            return `<link rel="stylesheet" href="/${chunk.file}" />`;
-          })
-          .join()}
+        ${styles}
       </head>
       <body ${helmet.bodyAttributes.toString()}>
         <div id="root">${appMarkup}</div>
         <script>
           window.${preloadedStateWindowKey} = ${serialize(appState)}
         </script>
-        <script src="${js}"${isProd ? '' : ' crossorigin'}></script>
-        ${jsChunks
-          .map(
-            chunk =>
-              isProd
-                ? `<script src="/${chunk.file}"></script>`
-                : `<script src="http://${process.env.HOST}:${process.env.PORT +
-                    1}/${chunk.file}"></script>`
-          )
-          .join('\n')}
-        <script>window.${startAppWindowKey}();</script>
+        ${cssHash}
+        ${js}
       </body>
     </html>
   `

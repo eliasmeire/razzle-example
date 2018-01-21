@@ -1,5 +1,7 @@
-const { ReactLoadablePlugin } = require('react-loadable/webpack');
+const ExtractCssChunks = require('extract-css-chunks-webpack-plugin');
 const workboxPlugin = require('workbox-webpack-plugin');
+const StatsWriterPlugin = require('webpack-stats-plugin').StatsWriterPlugin;
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const workboxModify = (config, { target, dev }) => {
   const newConfig = config;
@@ -29,13 +31,61 @@ const workboxModify = (config, { target, dev }) => {
   return newConfig;
 };
 
-const reactLoadableModify = (config, { target }) => {
+const cssChunksPluginModify = (config, { target, dev }) => {
+  const newConfig = config;
+
+  if (target === 'web') {
+    const originalRuleIndex = config.module.rules.findIndex(
+      rule => rule.test && new RegExp(rule.test).test('a.css')
+    );
+
+    const newRule = {
+      test: /\.css$/,
+      use: ExtractCssChunks.extract({
+        use: [
+          // {
+          //   loader: 'style-loader'
+          // },
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              camelCase: true,
+              minify: !dev,
+              localIdentName: dev
+                ? '[name]__[local]--[hash:base64:5]'
+                : '[hash:base64:5]'
+            }
+          }
+        ]
+      })
+    };
+
+    newConfig.module.rules[originalRuleIndex] = newRule;
+    newConfig.plugins.unshift(
+      new ExtractCssChunks({
+        filename: 'static/css/[name].[contenthash:base64:5].css'
+      })
+    );
+    newConfig.plugins.splice(
+      newConfig.plugins.findIndex(
+        plugin => plugin instanceof ExtractTextPlugin
+      ),
+      1
+    );
+  }
+
+  return newConfig;
+};
+
+const statsWriterPluginModify = (config, { target }) => {
   const newConfig = config;
 
   if (target === 'web') {
     newConfig.plugins.push(
-      new ReactLoadablePlugin({
-        filename: './build/react-loadable.json'
+      new StatsWriterPlugin({
+        filename: '../stats.json',
+        fields: null
       })
     );
   }
@@ -45,35 +95,12 @@ const reactLoadableModify = (config, { target }) => {
 
 const commonChunksModify = (config, { target, dev }, webpack) => {
   const newConfig = config;
-
   if (target === 'web') {
-    newConfig.output.filename = dev
-      ? 'static/js/[name].js'
-      : 'static/js/[name].[hash:8].js';
-
-    newConfig.entry.vendor = [
-      require.resolve('razzle/polyfills'),
-      require.resolve('react'),
-      require.resolve('react-dom'),
-      require.resolve('react-router-dom'),
-      require.resolve('redux'),
-      require.resolve('axios')
-      // ... add any other vendor packages with require.resolve('xxx')
-    ];
-
     newConfig.plugins.push(
       new webpack.optimize.CommonsChunkPlugin({
-        names: ['vendor', 'manifest'],
+        names: ['bootstrap'],
+        filename: 'static/js/[name].[hash:8].js',
         minChunks: Infinity
-      })
-    );
-
-    // Extract common modules from all the chunks (requires no 'name' property)
-    newConfig.plugins.push(
-      new webpack.optimize.CommonsChunkPlugin({
-        async: true,
-        children: true,
-        minChunks: 2
       })
     );
   }
@@ -90,5 +117,10 @@ const applyModifyFns = (args, modifyFns) => {
 
 module.exports = {
   modify: (...args) =>
-    applyModifyFns(args, [workboxModify, reactLoadableModify])
+    applyModifyFns(args, [
+      cssChunksPluginModify,
+      commonChunksModify,
+      workboxModify,
+      statsWriterPluginModify
+    ])
 };

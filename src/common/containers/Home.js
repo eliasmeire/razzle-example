@@ -4,11 +4,11 @@ import logo from '../../assets/logo.svg';
 import Post from '../components/Post';
 import { getPostsByIds } from '../reducers/views/overview';
 import { actions } from '../reducers/entities/posts';
-import './Home.css';
+import styles from './Home.css';
 
 class Home extends PureComponent {
   componentDidMount() {
-    //his.props.fetchPostsIfNeeded();
+    //this.props.fetchPostsIfNeeded();
   }
 
   render() {
@@ -23,10 +23,10 @@ class Home extends PureComponent {
     }
 
     return (
-      <div className="home">
+      <div className={styles.home}>
         <img src={logo} alt={'Logo'} />
         {error && <div>{JSON.stringify(error)}</div>}
-        <div className="posts">
+        <div className={styles.posts}>
           {posts && posts.map(post => <Post key={post.id} {...post} />)}
         </div>
       </div>
