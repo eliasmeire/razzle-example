@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './Post.css';
+import styles from './Post.module.css';
 
 const Post = ({ title, body, id }) => (
-  <div className="post">
+  <div className={styles.post}>
     <h3>
       <Link to={`/posts/${id}`}>{title}</Link>
       <p>{body}</p>

@@ -1,5 +1,6 @@
 const { ReactLoadablePlugin } = require('react-loadable/webpack');
 const workboxPlugin = require('workbox-webpack-plugin');
+const ExtractCssChunks = require('extract-css-chunks-webpack-plugin');
 
 const workboxModify = (config, { target, dev }) => {
   const newConfig = config;
@@ -81,6 +82,112 @@ const commonChunksModify = (config, { target, dev }, webpack) => {
   return newConfig;
 };
 
+const cssModify = (config, { target, dev }, webpack) => {
+  const appConfig = Object.assign({}, config);
+  const isServer = target !== 'web';
+  const postCSSLoaderOptions = {
+    ident: 'postcss', // https://webpack.js.org/guides/migrating/#complex-options
+    plugins: () => [
+      require('postcss-flexbugs-fixes'),
+      require('autoprefixer')({
+        browsers: ['>1%', 'last 1 versions'],
+        flexbox: 'no-2009'
+      })
+    ]
+  };
+
+  const cssConfig = modules =>
+    [
+      {
+        loader: require.resolve('css-loader'),
+        options: {
+          importLoaders: 1,
+          minimize: !dev,
+          sourceMap: !dev,
+          modules: modules,
+          localIdentName: modules
+            ? dev ? '[name]-[hash:base64:6]' : '[hash:base64:6]'
+            : undefined
+        }
+      },
+      isServer && {
+        loader: require.resolve('postcss-loader'),
+        options: postCSSLoaderOptions
+      }
+    ].filter(x => !!x);
+  const css = cssConfig(false);
+  const cssModules = cssConfig(true);
+
+  const i = appConfig.module.rules.findIndex(
+    rule => rule.test && !!'.css'.match(rule.test)
+  );
+
+  if (!dev && !isServer) {
+    appConfig.module.rules[i] = {
+      test: /\.css$/,
+      exclude: /\.module\.css$/,
+      use: ExtractCssChunks.extract({
+        fallback: {
+          loader: require.resolve('style-loader'),
+          options: {
+            hmr: false
+          }
+        },
+        use: css
+      })
+    };
+    appConfig.module.rules.push({
+      test: /\.module\.css$/,
+      use: ExtractCssChunks.extract({
+        fallback: {
+          loader: require.resolve('style-loader'),
+          options: {
+            hmr: false
+          }
+        },
+        use: cssModules
+      })
+    });
+    appConfig.plugins.push(
+      new ExtractCssChunks({
+        filename: 'static/css/[name].[contenthash].css'
+      })
+    );
+  } else if (!dev && isServer) {
+    appConfig.module.rules[i] = {
+      test: /\.css$/,
+      exclude: /\.module\.css$/,
+      use: css
+    };
+    appConfig.module.rules.push({
+      test: /\.module\.css$/,
+      use: [
+        isServer && require.resolve('isomorphic-style-loader'),
+        ...cssModules
+      ].filter(x => !!x)
+    });
+  } else {
+    appConfig.module.rules[i] = {
+      test: /\.css$/,
+      exclude: /\.module\.css$/,
+      use: [!isServer && require.resolve('style-loader'), ...css].filter(
+        x => !!x
+      )
+    };
+    appConfig.module.rules.push({
+      test: /\.module\.css$/,
+      use: [
+        isServer
+          ? require.resolve('isomorphic-style-loader')
+          : require.resolve('style-loader'),
+        ...cssModules
+      ].filter(x => !!x)
+    });
+  }
+
+  return appConfig;
+};
+
 const applyModifyFns = (args, modifyFns) => {
   const argsExceptConfig = args.slice(1);
   return modifyFns.reduce((config, modifyFn) => {
@@ -90,5 +197,5 @@ const applyModifyFns = (args, modifyFns) => {
 
 module.exports = {
   modify: (...args) =>
-    applyModifyFns(args, [workboxModify, reactLoadableModify])
+    applyModifyFns(args, [cssModify, workboxModify, reactLoadableModify])
 };

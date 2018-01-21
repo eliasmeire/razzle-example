@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import Post from '../components/Post';
 import { getPostById, actions } from '../reducers/views/detail';
 import { actions as postActions } from '../reducers/entities/posts';
+import styles from './PostDetail.module.css';
 
 class Detail extends PureComponent {
   constructor(props) {
@@ -15,6 +16,10 @@ class Detail extends PureComponent {
   componentDidMount() {
     const { match, fetchPostIfNeeded } = this.props;
     fetchPostIfNeeded(match.params.postId);
+    console.log(styles);
+    import('./PostDetail.module.css').then(module =>
+      console.log('dynamic', module)
+    );
   }
 
   render() {
@@ -29,7 +34,7 @@ class Detail extends PureComponent {
     }
 
     return (
-      <div className="detail">
+      <div className={styles.detail}>
         {post && (
           <Fragment>
             <Helmet>
