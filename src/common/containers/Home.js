@@ -8,9 +8,7 @@ import styles from './Home.module.css';
 
 class Home extends PureComponent {
   componentDidMount() {
-    //his.props.fetchPostsIfNeeded();
-    console.log(styles);
-    import('./Home.module.css').then(module => console.log('dynamic', module));
+    //this.props.fetchPostsIfNeeded();
   }
 
   render() {

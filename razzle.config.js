@@ -52,20 +52,10 @@ const commonChunksModify = (config, { target, dev }, webpack) => {
       ? 'static/js/[name].js'
       : 'static/js/[name].[hash:8].js';
 
-    newConfig.entry.vendor = [
-      require.resolve('razzle/polyfills'),
-      require.resolve('react'),
-      require.resolve('react-dom'),
-      require.resolve('react-router-dom'),
-      require.resolve('redux'),
-      require.resolve('axios')
-      // ... add any other vendor packages with require.resolve('xxx')
-    ];
-
     newConfig.plugins.push(
       new webpack.optimize.CommonsChunkPlugin({
-        names: ['vendor', 'manifest'],
-        minChunks: Infinity
+        names: ['vendor'],
+        minChunks: ({ resource }) => /node_modules/.test(resource)
       })
     );
 
@@ -74,7 +64,7 @@ const commonChunksModify = (config, { target, dev }, webpack) => {
       new webpack.optimize.CommonsChunkPlugin({
         async: true,
         children: true,
-        minChunks: 2
+        minChunks: Infinity
       })
     );
   }
@@ -106,7 +96,7 @@ const cssModify = (config, { target, dev }, webpack) => {
           sourceMap: !dev,
           modules: modules,
           localIdentName: modules
-            ? dev ? '[name]-[hash:base64:6]' : '[hash:base64:6]'
+            ? dev ? '[name]-[hash:base64:6]' : '[hash:base64:5]'
             : undefined
         }
       },
@@ -150,7 +140,7 @@ const cssModify = (config, { target, dev }, webpack) => {
     });
     appConfig.plugins.push(
       new ExtractCssChunks({
-        filename: 'static/css/[name].[contenthash].css'
+        filename: 'static/css/[name].[contenthash:base64:6].css'
       })
     );
   } else if (!dev && isServer) {
@@ -197,5 +187,10 @@ const applyModifyFns = (args, modifyFns) => {
 
 module.exports = {
   modify: (...args) =>
-    applyModifyFns(args, [cssModify, workboxModify, reactLoadableModify])
+    applyModifyFns(args, [
+      commonChunksModify,
+      cssModify,
+      workboxModify,
+      reactLoadableModify
+    ])
 };

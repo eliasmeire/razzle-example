@@ -16,10 +16,6 @@ class Detail extends PureComponent {
   componentDidMount() {
     const { match, fetchPostIfNeeded } = this.props;
     fetchPostIfNeeded(match.params.postId);
-    console.log(styles);
-    import('./PostDetail.module.css').then(module =>
-      console.log('dynamic', module)
-    );
   }
 
   render() {

@@ -8,10 +8,15 @@ import { getBundles } from 'react-loadable/webpack';
 
 const stats = require('../../../build/react-loadable.json');
 const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
+const { js: clientJs, css } = assets.client;
+const { js: vendorJs } = assets.vendor;
+const cssChunksMap = Object.keys(assets).reduce(
+  (acc, key) => (assets[key].css ? { ...acc, [key]: assets[key].css } : acc),
+  {}
+);
 
 export const sendHtmlResponse = (req, res) => {
   const { appMarkup, appState, helmet, modules } = res.locals;
-  const { js, css } = assets.client;
   const bundles = getBundles(stats, modules);
   const jsChunks = bundles.filter(bundle => bundle.file.endsWith('.js'));
   const cssChunks = bundles.filter(bundle => bundle.file.endsWith('.css'));
@@ -39,7 +44,8 @@ export const sendHtmlResponse = (req, res) => {
         <script>
           window.${preloadedStateWindowKey} = ${serialize(appState)}
         </script>
-        <script src="${js}"${isProd ? '' : ' crossorigin'}></script>
+        <script src="${vendorJs}"${isProd ? '' : ' crossorigin'}></script>
+        <script src="${clientJs}"${isProd ? '' : ' crossorigin'}></script>
         ${jsChunks
           .map(
             chunk =>
@@ -49,7 +55,10 @@ export const sendHtmlResponse = (req, res) => {
                     1}/${chunk.file}"></script>`
           )
           .join('\n')}
-        <script>window.${startAppWindowKey}();</script>
+        <script>
+          window.${startAppWindowKey}();
+          window.__CSS_CHUNKS__=${serialize(cssChunksMap)};
+        </script>
       </body>
     </html>
   `
