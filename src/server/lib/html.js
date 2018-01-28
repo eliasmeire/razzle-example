@@ -8,10 +8,15 @@ import { getBundles } from 'react-loadable/webpack';
 
 const stats = require('../../../build/react-loadable.json');
 const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
+const commonScripts = [
+  assets.manifest.js,
+  assets.vendor.js,
+  assets.client.js
+].map(js => `<script src="${js}"${isProd ? '' : ' crossorigin'}></script>`);
 
 export const sendHtmlResponse = (req, res) => {
   const { appMarkup, appState, helmet, modules } = res.locals;
-  const { js, css } = assets.client;
+
   const bundles = getBundles(stats, modules);
   const jsChunks = bundles.filter(bundle => bundle.file.endsWith('.js'));
   const cssChunks = bundles.filter(bundle => bundle.file.endsWith('.css'));
@@ -27,7 +32,11 @@ export const sendHtmlResponse = (req, res) => {
         ${helmet.title.toString()}
         ${helmet.meta.toString()}
         ${helmet.link.toString()}
-        ${css ? `<link rel="stylesheet" href="${css}">` : ''}
+        ${
+          assets.client.css
+            ? `<link rel="stylesheet" href="${assets.client.css}">`
+            : ''
+        }
         ${cssChunks
           .map(chunk => {
             return `<link rel="stylesheet" href="/${chunk.file}" />`;
@@ -37,9 +46,9 @@ export const sendHtmlResponse = (req, res) => {
       <body ${helmet.bodyAttributes.toString()}>
         <div id="root">${appMarkup}</div>
         <script>
-          window.${preloadedStateWindowKey} = ${serialize(appState)}
+          window.${preloadedStateWindowKey} = ${serialize(appState)};
         </script>
-        <script src="${js}"${isProd ? '' : ' crossorigin'}></script>
+        ${commonScripts}
         ${jsChunks
           .map(
             chunk =>
@@ -48,7 +57,7 @@ export const sendHtmlResponse = (req, res) => {
                 : `<script src="http://${process.env.HOST}:${process.env.PORT +
                     1}/${chunk.file}"></script>`
           )
-          .join('\n')}
+          .join()}
         <script>window.${startAppWindowKey}();</script>
       </body>
     </html>

@@ -1,5 +1,6 @@
 const { ReactLoadablePlugin } = require('react-loadable/webpack');
 const workboxPlugin = require('workbox-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const workboxModify = (config, { target, dev }) => {
   const newConfig = config;
@@ -8,7 +9,7 @@ const workboxModify = (config, { target, dev }) => {
     newConfig.plugins.push(
       new workboxPlugin({
         globDirectory: './build/public',
-        globPatterns: ['**/*.{html,js,css,svg}'],
+        globPatterns: ['**/*.{html,js,css,svg,png,jpg}'],
         swDest: './build/public/sw.js',
         clientsClaim: true,
         skipWaiting: true,
@@ -43,6 +44,23 @@ const reactLoadableModify = (config, { target }) => {
   return newConfig;
 };
 
+const extractTextPluginModify = (config, { target, dev }) => {
+  const newConfig = config;
+
+  if (target === 'web' && !dev) {
+    const i = newConfig.plugins.findIndex(
+      plugin => plugin instanceof ExtractTextPlugin
+    );
+
+    newConfig.plugins[i] = new ExtractTextPlugin({
+      filename: 'static/css/client.[contenthash:8].css',
+      allChunks: true
+    });
+  }
+
+  return newConfig;
+};
+
 const commonChunksModify = (config, { target, dev }, webpack) => {
   const newConfig = config;
 
@@ -67,15 +85,6 @@ const commonChunksModify = (config, { target, dev }, webpack) => {
         minChunks: Infinity
       })
     );
-
-    // Extract common modules from all the chunks (requires no 'name' property)
-    newConfig.plugins.push(
-      new webpack.optimize.CommonsChunkPlugin({
-        async: true,
-        children: true,
-        minChunks: 2
-      })
-    );
   }
 
   return newConfig;
@@ -90,5 +99,10 @@ const applyModifyFns = (args, modifyFns) => {
 
 module.exports = {
   modify: (...args) =>
-    applyModifyFns(args, [workboxModify, reactLoadableModify])
+    applyModifyFns(args, [
+      workboxModify,
+      reactLoadableModify,
+      commonChunksModify,
+      extractTextPluginModify
+    ])
 };
