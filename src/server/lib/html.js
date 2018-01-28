@@ -23,44 +23,46 @@ export const sendHtmlResponse = (req, res) => {
 
   res.status(200).send(
     html`
-    <!doctype html>
-    <html ${helmet.htmlAttributes.toString()}>
-      <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta charSet='utf-8' />
-        ${helmet.title.toString()}
-        ${helmet.meta.toString()}
-        ${helmet.link.toString()}
-        ${
-          assets.client.css
-            ? `<link rel="stylesheet" href="${assets.client.css}">`
-            : ''
-        }
-        ${cssChunks
-          .map(chunk => {
-            return `<link rel="stylesheet" href="/${chunk.file}" />`;
-          })
-          .join()}
-      </head>
-      <body ${helmet.bodyAttributes.toString()}>
-        <div id="root">${appMarkup}</div>
-        <script>
-          window.${preloadedStateWindowKey} = ${serialize(appState)};
-        </script>
-        ${commonScripts}
-        ${jsChunks
-          .map(
-            chunk =>
-              isProd
-                ? `<script src="/${chunk.file}"></script>`
-                : `<script src="http://${process.env.HOST}:${process.env.PORT +
-                    1}/${chunk.file}"></script>`
-          )
-          .join()}
-        <script>window.${startAppWindowKey}();</script>
-      </body>
-    </html>
+<!doctype html>
+<html ${helmet.htmlAttributes.toString()}>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charSet='utf-8' />
+    ${helmet.title.toString()}
+    ${helmet.meta.toString()}
+    ${helmet.link.toString()}
+    ${
+      assets.client.css
+        ? `<link rel="stylesheet" href="${assets.client.css}">`
+        : ''
+    }
+    ${cssChunks
+      .map(chunk => {
+        return `<link rel="stylesheet" href="/${chunk.file}" />`;
+      })
+      .join()}
+  </head>
+  <body ${helmet.bodyAttributes.toString()}>
+    <div id="root">${appMarkup}</div>
+    <script>
+      window.${preloadedStateWindowKey} = ${serialize(appState, {
+      isJSON: true
+    })};
+    </script>
+    ${commonScripts}
+    ${jsChunks
+      .map(
+        chunk =>
+          isProd
+            ? `<script src="/${chunk.file}"></script>`
+            : `<script src="http://${process.env.HOST}:${process.env.PORT +
+                1}/${chunk.file}"></script>`
+      )
+      .join()}
+    <script>window.${startAppWindowKey}();</script>
+  </body>
+</html>
   `
   );
 };

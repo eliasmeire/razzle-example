@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.svg';
-import Post from '../components/Post';
 import { getPostsByIds } from '../reducers/views/overview';
 import { actions } from '../reducers/entities/posts';
 import './Home.css';
 
 class Home extends PureComponent {
   componentDidMount() {
-    //his.props.fetchPostsIfNeeded();
+    this.props.fetchPostsIfNeeded();
   }
 
   render() {
@@ -27,7 +27,12 @@ class Home extends PureComponent {
         <img src={logo} alt={'Logo'} />
         {error && <div>{JSON.stringify(error)}</div>}
         <div className="posts">
-          {posts && posts.map(post => <Post key={post.id} {...post} />)}
+          {posts &&
+            posts.map(post => (
+              <Link key={post.id} to={`/posts/${post.id}`}>
+                <h2>{post.title}</h2>
+              </Link>
+            ))}
         </div>
       </div>
     );

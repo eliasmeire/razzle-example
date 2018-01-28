@@ -33,6 +33,13 @@ export const actions = {
     type: types.FETCH_POSTS,
     promise: fetchPosts()
   }),
+  fetchPostsIfNeeded: () => (dispatch, getState) => {
+    const { entities: { posts } } = getState();
+
+    if (Object.keys(posts).length === 0) {
+      dispatch(actions.fetchPosts());
+    }
+  },
   fetchPost: postId => ({
     type: types.FETCH_POST,
     promise: fetchPost(postId)
